@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A fun Flappy Bird game created by Ashish Vishwakarma">
+    <title>Flappy Bird Game</title>
+    <link rel="icon" href="assets/favicon.png" type="image/png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="preloader">
+        <div id="preloader-content">
+            <h1>Flappy Bird</h1>
+            <div id="progress-bar-container">
+                <div id="progress-bar"></div>
+            </div>
+            <p id="progress-text">0%</p>
+            <p class="loading-tip" id="loading-tip">Tip: Press SPACE to jump!</p>
+        </div>
+    </div>   
+
+    <div id="Mainmenu">
+        <h2>Flappy Bird</h2>
+        <div class="menu-buttons">
+            <button onclick="startplay()" class="menu-btn">
+                <span class="material-symbols-outlined">play_arrow</span> Start Game
+            </button>
+            <button onclick="showHighestScores()" class="menu-btn">
+                <span class="material-symbols-outlined">leaderboard</span> High Scores
+            </button>
+            <button onclick="showDifficultyScreen()" class="menu-btn">
+                <span class="material-symbols-outlined">settings</span> Difficulty: 
+                <span id="selectedDifficulty"></span>
+            </button>
+            <button onclick="showAbout()" class="menu-btn">
+                <span class="material-symbols-outlined">info</span> About
+            </button>
+            <button onclick="showReset()" class="menu-btn">
+                <span class="material-symbols-outlined">restart_alt</span> Reset
+            </button>
+        </div>
+        <div class="utility-buttons">
+            <button id="fullScreenBtn" onclick="toggleFullScreen()" class="util-btn">
+                <span class="material-symbols-outlined">fullscreen</span> Full Screen
+            </button>
+            <button id="musicToggleBtn" onclick="toggleMusic()" class="util-btn">
+                <span class="material-symbols-outlined">music_note</span> Play Music
+            </button>
+        </div>
+    </div>
+
+    <div id="highestScoresOverlay" class="overlay">
+        <div class="overlay-content">
+            <h2>Highest Scores</h2>
+            <div class="score-display">
+                <p><span class="difficulty-tag easy">Easy:</span> <span id="easyScore">0</span></p>
+                <p><span class="difficulty-tag hard">Hard:</span> <span id="hardScore">0</span></p>
+                <p><span class="difficulty-tag advanced">Advanced:</span> <span id="advancedScore">0</span></p>
+            </div>
+            <button onclick="closeOverlay()" class="close-btn">Close</button>
+        </div>
+    </div>
+
+    <div id="difficultyScreen" class="overlay">
+        <div class="overlay-content">
+            <h2>Select Difficulty</h2>
+            <div class="difficulty-buttons">
+                <button onclick="startGame('easy')" class="difficulty-btn easy">
+                    Easy<br><small>Wider gaps, slower pipes</small>
+                </button>
+                <button onclick="startGame('hard')" class="difficulty-btn hard">
+                    Hard<br><small>Medium gaps, faster pipes</small>
+                </button>
+                <button onclick="startGame('advanced')" class="difficulty-btn advanced">
+                    Advanced<br><small>Narrow gaps, very fast</small>
+                </button>
+            </div>
+            <button onclick="closeOverlay()" class="close-btn">Close</button>
+        </div>
+    </div>
+
+    <div id="about" class="overlay">
+        <div class="overlay-content">
+            <h2>About Flappy Bird</h2>
+            <div class="about-content">
+                <p>Flappy Bird is a 2013 casual mobile game developed by Vietnamese video game artist and programmer Dong Nguyen.</p>
+                <p>This enhanced version was created by <strong>Ashish Vishwakarma</strong>, featuring:</p>
+                <ul>
+                    <li>Smooth scrolling background</li>
+                    <li>Multiple difficulty levels</li>
+                    <li>High score tracking</li>
+                    <li>Responsive design</li>
+                    <li>Background music and sound effects</li>
+                </ul>
+                <p>Version: 2.0 | Last Updated: 2023</p>
+            </div>
+            <button onclick="closeOverlay()" class="close-btn">Close</button>
+        </div>
+    </div>
+
+    <div id="reset" class="overlay">
+        <div class="overlay-content">
+            <h3>Reset All Progress</h3>
+            <p>Are you sure you want to reset all game data? This will:</p>
+            <ul>
+                <li>Clear all high scores</li>
+                <li>Reset difficulty settings</li>
+            </ul>
+            <p>This action cannot be undone.</p>
+            <div class="confirmBtn">
+                <button onclick="closeOverlay()" class="cancel-btn">Cancel</button>
+                <button onclick="confirmResetBtn()" class="confirm-btn">Confirm Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="600" style="display: none;"></canvas>
+
+    <div id="gameOverScreen" class="overlay">
+        <div class="overlay-content">
+            <h2>Game Over</h2>
+            <hr>
+            <div id="finalScore" class="score-display"></div>
+            <div class="game-over-buttons">
+                <button id="resetBtn" onclick="restartGame()" class="restart-btn">
+                    <span class="material-symbols-outlined">replay</span> Play Again
+                </button>
+                <button onclick="showMainMenu()" class="menu-btn">
+                    <span class="material-symbols-outlined">home</span> Main Menu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="background-music" loop>
+        <source src="assets/background_music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+// Enhanced Music Controller with Volume Control
+const music = document.getElementById('background-music');
+const musicToggleBtn = document.getElementById('musicToggleBtn');
+let isMusicInitialized = false;
+
+// Initialize music with user's preference
+function initializeMusic() {
+    if (isMusicInitialized) return;
+    
+    const isMusicPlaying = localStorage.getItem('musicPlaying') === 'true';
+    music.volume = parseFloat(localStorage.getItem('musicVolume')) || 0.5;
+    
+    if (isMusicPlaying) {
+        unmuteMusic();
+    } else {
+        pauseMusic();
+    }
+    
+    isMusicInitialized = true;
+}
+
+// Toggle Play/Pause Music
+function toggleMusic() {
+    if (music.paused) {
+        unmuteMusic();
+    } else {
+        pauseMusic();
+    }
+}
+
+// Unmute and Play Music
+function unmuteMusic() {
+    music.play().then(() => {
+        musicToggleBtn.innerHTML = '<span class="material-symbols-outlined">volume_up</span> Music ON';
+        localStorage.setItem('musicPlaying', 'true');
+    }).catch(error => {
+        console.log("Audio play error:", error);
+    });
+}
+
+// Pause Music
+function pauseMusic() {
+    music.pause();
+    musicToggleBtn.innerHTML = '<span class="material-symbols-outlined">volume_off</span> Music OFF';
+    localStorage.setItem('musicPlaying', 'false');
+}
+
+// Adjust Music Volume
+function setMusicVolume(volume) {
+    music.volume = volume;
+    localStorage.setItem('musicVolume', volume);
+}
+
+// Initialize when user interacts with the page
+document.addEventListener('click', initializeMusic, { once: true });
+
+// Random loading tips
+const loadingTips = [
+    "Tip: Press SPACE or CLICK to make the bird jump!",
+    "Tip: The higher your score, the faster the pipes move!",
+    "Tip: Try different difficulty levels for more challenge!",
+    "Did you know? The original Flappy Bird was removed from app stores in 2014."
+];
+
+// Set random loading tip
+document.addEventListener('DOMContentLoaded', () => {
+    const tipElement = document.getElementById('loading-tip');
+    if (tipElement) {
+        tipElement.textContent = loadingTips[Math.floor(Math.random() * loadingTips.length)];
+    }
+});
+
+        // Full-Screen Functionality
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                if (canvas.requestFullscreen) {
+                    canvas.requestFullscreen();
+                } else if (canvas.mozRequestFullScreen) { // Firefox
+                    canvas.mozRequestFullScreen();
+                } else if (canvas.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                    canvas.webkitRequestFullscreen();
+                } else if (canvas.msRequestFullscreen) { // IE/Edge
+                    canvas.msRequestFullscreen();
+                }
+                // Update button text
+                document.getElementById('fullScreenBtn').innerHTML = 
+                    '<span class="material-symbols-outlined">fullscreen_exit</span> Exit Full Screen';
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { // Firefox
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { // IE/Edge
+                    document.msExitFullscreen();
+                }
+                // Update button text
+                document.getElementById('fullScreenBtn').innerHTML = 
+                    '<span class="material-symbols-outlined">fullscreen</span> Full Screen';
+            }
+        }
+
+        // Listen for fullscreen change to update button text
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+        document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+        document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+
+        function updateFullscreenButton() {
+            const fullscreenBtn = document.getElementById('fullScreenBtn');
+            if (document.fullscreenElement) {
+                fullscreenBtn.innerHTML = 
+                    '<span class="material-symbols-outlined">fullscreen_exit</span> Exit Full Screen';
+            } else {
+                fullscreenBtn.innerHTML = 
+                    '<span class="material-symbols-outlined">fullscreen</span> Full Screen';
+            }
+        }
+
+        // Initialize button text
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFullscreenButton();
+        });
+    </script>
+
+    <script src="flappy.js"></script>
+</body>
+</html>
