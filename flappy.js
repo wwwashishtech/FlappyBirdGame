@@ -8,7 +8,7 @@ window.addEventListener('load', function() {
         'assets/bird-jump.mp3',
         'assets/button-click.mp3',
         'assets/game-over.mp3',
-        'assets/score-Points.mp3'
+        'assets/score-points.mp3'
     ];
 
     let loadedResources = 0;
