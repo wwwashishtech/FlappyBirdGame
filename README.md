@@ -1,8 +1,7 @@
 # 🐦 Flappy Bird Web Game
 
-<div align="center">
-  <img src="assets/game-screenshot.png" alt="Game Screenshot" width="400">
-</div>
+![Screenshot 2025-03-24 231304](https://github.com/user-attachments/assets/0ef6168f-88a9-44ab-8266-617ebb2fb636)
+
 
 ## 📝 Overview
 
